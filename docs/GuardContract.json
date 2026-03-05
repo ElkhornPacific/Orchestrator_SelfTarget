@@ -1,0 +1,141 @@
+{
+  "schema_version": "v0.5",
+  "contract_version": "v1.0",
+  "created_utc": "2026-03-04T00:00:00Z",
+  "updated_utc": "2026-03-04T00:00:00Z",
+  "repo_id": "Orchestrator_SelfTarget",
+  "repo_url": "https://github.com/<REPLACE_WITH_YOUR_URL>/Orchestrator_SelfTarget",
+  "immutable_artifacts": [
+    "docs/GuardContract.json"
+  ],
+  "path_policy": {
+    "allow_globs": [
+      "logs/**",
+      "docs/immutable_baseline.sha256.json"
+    ],
+    "deny_globs": [],
+    "protected_globs": [
+      "docs/GuardContract.json",
+      "docs/immutable_baseline.sha256.json"
+    ]
+  },
+  "invariants": [
+    {
+      "id": "INV-001",
+      "title": "Deterministic enforcement gates",
+      "statement": "The orchestrator must enforce strict PASS or FAIL with no silent skips and must run gates in the documented order.",
+      "severity": "blocker",
+      "scope": "runtime",
+      "check_type": "manual",
+      "evidence_required": [
+        "logs/run-report.json"
+      ],
+      "applies_to": {
+        "paths": [
+          "docs/GuardContract.json"
+        ],
+        "globs": [
+          "logs/**"
+        ],
+        "modules": [],
+        "commands": []
+      },
+      "rationale": "Self-hardening must never weaken enforcement guarantees.",
+      "references": [
+        "PRD REQ-001..REQ-012",
+        "Architecture ARC-001..ARC-007"
+      ],
+      "owner": "Matt",
+      "tags": [
+        "determinism",
+        "gates"
+      ],
+      "remediation_hint": "Inspect run-report and gate ordering. If ordering or skip behavior is incorrect, halt automation and fix orchestrator enforcement."
+    }
+  ],
+  "failure_policy": {
+    "max_attempts_by_failure_type": {
+      "TEST_FAILURE": 0,
+      "LINT_FAILURE": 0,
+      "TYPE_FAILURE": 0,
+      "CONTRACT_VIOLATION": 0,
+      "ARCHITECTURE_CONFLICT": 0,
+      "AMBIGUITY_DETECTED": 0,
+      "ENVIRONMENT_ERROR": 0
+    },
+    "immediate_escalation_failure_types": [
+      "CONTRACT_VIOLATION",
+      "ARCHITECTURE_CONFLICT",
+      "AMBIGUITY_DETECTED",
+      "ENVIRONMENT_ERROR"
+    ],
+    "retry_backoff_seconds": 0
+  },
+  "verification_steps": [
+    {
+      "id": "VSTEP-001",
+      "title": "Run Orchestrator unit tests",
+      "command": "python -m pytest -q",
+      "working_dir": "D:/GitHub/Orchestrator",
+      "timeout_seconds": 900,
+      "fail_fast": true,
+      "maps_to_failure_type": "TEST_FAILURE",
+      "produces_artifacts": []
+    },
+    {
+      "id": "VSTEP-002",
+      "title": "Run Orchestrator against TestTarget",
+      "command": "python orchestrator.py --repo D:/GitHub/Orchestrator_TestTarget --config D:/GitHub/Orchestrator/orchestrator_config.json",
+      "working_dir": "D:/GitHub/Orchestrator",
+      "timeout_seconds": 900,
+      "fail_fast": true,
+      "maps_to_failure_type": "CONTRACT_VIOLATION",
+      "produces_artifacts": []
+    }
+  ],
+  "run_report_path": "logs/run-report.json",
+  "execution_environment": {
+    "type": "bootstrap",
+    "definition_path": "BOOTSTRAP_TARGET_REPO.md",
+    "notes": "SelfTarget is a harness repo. Bootstrap instructions live at definition_path."
+  },
+  "extensions": {
+    "acceptance_criteria_map": [
+      {
+        "ac_id": "AC-001",
+        "ac_text": "SelfTarget executes deterministic gates and verifies Orchestrator against TestTarget with dual-supervisor constraints enforced externally.",
+        "verification_step_ids": [
+          "VSTEP-001",
+          "VSTEP-002"
+        ]
+      }
+    ],
+    "invariants_engine": {
+      "enabled": true,
+      "items": [
+        {
+          "id": "INV-001",
+          "params": {}
+        }
+      ]
+    },
+    "drift_detection": {
+      "enabled": true,
+      "artifacts": {
+        "prd_path": "docs/PRD.md",
+        "architecture_path": "docs/Architecture.md",
+        "tasks_path": "docs/Tasks.md"
+      },
+      "id_rules": {
+        "REQ": "REQ-\\d{3}",
+        "ARC": "ARC-\\d{3}",
+        "TASK": "TASK-\\d{3}"
+      },
+      "coverage_rules": {
+        "require_all_reqs_covered_by_arch": true,
+        "require_all_arch_covered_by_tasks": true,
+        "require_tasks_reference_arch": true
+      }
+    }
+  }
+}
