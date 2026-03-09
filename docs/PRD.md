@@ -1,120 +1,35 @@
-# PRD
-# Self-Hardening Mode v1
-# Lights Out Workflow – Orchestrator Enforcement Engine
+Executable enforcement (Orchestrator)
 
-## Executive Summary
+REQ-001: Provide executable checks for supervisor output schema (TASK-009), credential/secret scan before commit (TASK-010), and catastrophic-failure alert generation (TASK-008). Each must be invocable by the Coordinator and exit 0 (PASS) or 1 (FAIL) with clear, deterministic output.
 
-Self-Hardening Mode v1 enables Orchestrator to harden itself autonomously using a dual supervisor model built on the ChatGPT API, while preserving deterministic structural enforcement and preventing drift from specifications.
+REQ-002: Do not change the enforcement pipeline order in docs/enforcement-pipeline.md or the artifact schemas (run-report, GuardContract). New scripts are additive.
 
-This mode must operate without manual iteration during normal cycles. It must halt safely when structural drift or enforcement failure cannot be corrected without weakening the enforcement criteria.
+REQ-003: Document each new script in the workflow (or in a single "Executable enforcement scripts" subsection) so the Coordinator knows when and how to run it.
 
-## Problem Statement
+Goal: Turn selected workflow policy rules into executable enforcement so the Coordinator (or orchestrator runtime) can run deterministic checks and fail the cycle on violation, instead of relying only on documented "MUST" and manual verification.
 
-Manual iteration between the executor environment and the reviewer consumes too much time and blocks the goal of background development. The workflow must produce enterprise-grade software without drift from specifications, and must not permit silent bypass of structural rules.
+Already done:
+- Orchestrator runtime (orchestrator.py) enforces schema, path policy, immutable, invariants, drift, verification steps, failure policy per docs/enforcement-pipeline.md.
+- Allowlist check: scripts/check_edit_allowlist.py used in Step 2b; workflow mandates running it before Orchestrator.
 
-## Target User
+Remaining work (to be refined in Architecture/Tasks):
+- Supervisor output schema validator: script that accepts Reviewer A and Reviewer B outputs and validates required fields and verdict values per TASK-009.
+- Credential/secret scanner: script that scans staged or modified files for configured patterns; FAIL if found; run before commit.
+- Catastrophic-failure alert generator: script that writes logs/alert_catastrophic_*.txt or logs/catastrophic_failure.json with timestamp, affected repos, reason, last known good ref(s).
+- Wire each script into the workflow steps where the Coordinator currently has a "MUST" check.
+- Optionally: check_executable_enforcement.py to verify all executable enforcement scripts are present and documented.
 
-Solo operator.
+Context (policy-only today):
+- Supervisor output schema (TASK-009): Coordinator MUST validate proposed change packet and audit decision; no validator script.
+- Credential scan (TASK-010): Coordinator MUST ensure no credential patterns in staged/modified files; workflow says "Optionally run a grep or script"; no dedicated script.
+- Catastrophic-failure alert (TASK-008): Procedure requires writing an alert artifact; no script to generate it.
 
-## Use Cases
+Scope:
+- In scope: Python scripts in scripts/ for schema validator, credential scanner, alert generator. Each deterministic, invocable by Coordinator, exit 0/1.
+- Out of scope: Dry Run and Target Identity Lock (roadmap); changing orchestrator.py gate order; automating enforcement relaxation detection (TASK-006 remains Reviewer obligation).
 
-1. Orchestrator autonomously improves its enforcement engine implementation while remaining within strict behavioral constraints.
-2. Orchestrator validates itself against:
-   - Orchestrator_SelfTarget (self-host harness)
-   - Orchestrator_TestTarget (regression fixture)
-3. On failure, Orchestrator halts and does not continue development if the failure cannot be resolved without relaxing enforcement.
+Constraints:
+- Orchestrator docs and enforcement pipeline remain authoritative. Scripts must be deterministic and safe to run in CI or by the Coordinator. Prefer Python in scripts/ for consistency with check_edit_allowlist.py and check_compound_integration.py.
 
-## User Stories and Acceptance Criteria
-
-### Story: Autonomous iteration with strict enforcement
-As the operator, I want Orchestrator to iterate autonomously so development proceeds in the background without consuming my time.
-
-Acceptance criteria:
-- A cycle executes deterministically and produces PASS or FAIL only.
-- No commits are made unless all enforcement gates PASS across both SelfTarget and TestTarget.
-- If any gate FAILs and cannot be corrected within configured limits, the system halts.
-
-### Story: Drift must not pass
-As the operator, I want drift results to be detected and never allowed to pass.
-
-Acceptance criteria:
-- Drift detection violations always produce FAIL.
-- The system must not modify tests or pass/fail criteria in order to force PASS.
-
-### Story: Safe rollback on catastrophic failure
-As the operator, I want the system to recover safely if a catastrophic failure occurs.
-
-Acceptance criteria:
-- Catastrophic failures trigger reset to last known good commit.
-- Automation halts and requires human intervention after rollback.
-
-## Functional Requirements (REQ)
-
-REQ-001: The system MUST require a dual-supervisor approval model where Supervisor A proposes changes and Supervisor B audits and approves before commit.
-
-REQ-002: The system MUST run Orchestrator deterministically against both Orchestrator_SelfTarget and Orchestrator_TestTarget in each cycle.
-
-REQ-003: The system MUST produce a deterministic evidence bundle for every cycle, including:
-- pytest output
-- orchestrator execution output
-- run-report.json
-- git diffs for each repo involved
-
-REQ-004: The system MUST enforce an allowlist-based edit policy. Any attempted edit outside the allowlist MUST FAIL immediately.
-
-REQ-005: The system MUST apply a two-phase promotion workflow. Changes MUST be staged and verified before promotion.
-
-REQ-006: The system MUST auto-commit directly to Orchestrator main ONLY after:
-- all enforcement gates PASS
-- Supervisor A approves
-- Supervisor B approves
-
-REQ-007: The system MUST NOT relax or weaken enforcement criteria to make PASS, including:
-- modifying tests to accept failures
-- reducing drift coverage requirements
-- weakening schema or path policy constraints
-
-REQ-008: The system MUST halt when drift or enforcement failures cannot be corrected without violating REQ-007.
-
-REQ-009: The system MUST require a clean working tree to start a cycle.
-
-REQ-010: On catastrophic failure, the system MUST reset to last known good commit, then halt and require human intervention.
-
-REQ-011: Supervisor inputs and outputs MUST conform to strict schemas. Invalid supervisor outputs MUST FAIL the cycle.
-
-REQ-012: OpenAI API credentials MUST NOT be written to disk or committed to any repo.
-
-## Non-Functional Requirements
-
-- Deterministic behavior for identical inputs.
-- No silent skipping of enforcement stages.
-- No partial PASS states.
-- Deterministic ordering of violations.
-- Reproducible from a clean clone.
-
-## Success Metrics
-
-- Drift violations are never allowed to pass.
-- Autonomous cycles complete without human intervention during normal operation.
-- Regression targets consistently PASS when no intentional violations exist.
-- Automatic halt occurs when failures cannot be resolved within constraints.
-
-## Non-Goals
-
-- No self-modifying schema changes without explicit human intervention.
-- No automatic rewriting of PRD, Architecture, or Tasks to match implementation.
-- No automatic relaxation of enforcement thresholds.
-- No unbounded refactoring of Orchestrator outside the allowed edit surface.
-
-## Open Questions
-
-- Maximum iterations per automated run.
-- Size threshold for diffs before halting.
-- Exact categorization of catastrophic failures for rollback.
-
-## Tool Role and Authority
-
-- GitHub repos are the authoritative system of record for code.
-- Each target repo’s docs/GuardContract.json is authoritative for that target.
-- The ChatGPT API supervisors are decision-makers but not systems of record.
-- Logs and run-report.json are evidence artifacts, not systems of record.
+System of Record: Orchestrator repo (D:\GitHub\Orchestrator).
+Where will tasks be created: docs/Tasks.md (or a new "Executable enforcement" section in Tasks.md, or docs/executable-enforcement-tasks.md as agreed).
