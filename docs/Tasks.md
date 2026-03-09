@@ -2,6 +2,17 @@
 # Self-Hardening Mode v1
 # Deterministic Behavioral Task Set
 
+TASK-001: Establish self-target repo artifact set
+TASK-002: Enforce dual supervisor approval before commit
+TASK-003: Produce deterministic evidence bundle each cycle
+TASK-004: Enforce allowlist-based edit policy
+TASK-005: Enforce two-phase promotion and PASS-gated commit
+TASK-006: Prevent enforcement relaxation to force PASS
+TASK-007: Halt when drift cannot be corrected
+TASK-008: Rollback on catastrophic failure and halt
+TASK-009: Enforce strict schemas for supervisor inputs and outputs
+TASK-010: Protect secrets and disallow credentials on disk
+
 Each TASK below is a behavioral obligation and MUST reference one or more ARC IDs from Architecture.md.
 
 ## TASK-001: Establish self-target repo artifact set

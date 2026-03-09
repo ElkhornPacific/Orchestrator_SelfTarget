@@ -1,6 +1,8 @@
 # Architecture
 # Self-Hardening Mode v1
 
+This architecture implements REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012.
+
 ## Architecture Decisions (ARC)
 
 ARC-001: The system MUST maintain three separate repositories:

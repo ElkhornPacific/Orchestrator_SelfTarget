@@ -99,6 +99,35 @@
     "definition_path": "BOOTSTRAP_TARGET_REPO.md",
     "notes": "SelfTarget is a harness repo. Bootstrap instructions live at definition_path."
   },
+  "invariants_engine": {
+    "enabled": true,
+    "items": [
+      {
+        "id": "repo.required_paths",
+        "params": {
+          "required": ["docs/PRD.md", "docs/Architecture.md", "docs/Tasks.md"]
+        }
+      }
+    ]
+  },
+  "drift_detection": {
+    "enabled": true,
+    "artifacts": {
+      "prd_path": "docs/PRD.md",
+      "architecture_path": "docs/Architecture.md",
+      "tasks_path": "docs/Tasks.md"
+    },
+    "id_rules": {
+      "REQ": "^(REQ-\\d{3})",
+      "ARC": "^(ARC-\\d{3})",
+      "TASK": "^(TASK-\\d{3})"
+    },
+    "coverage_rules": {
+      "require_all_reqs_covered_by_arch": true,
+      "require_all_arch_covered_by_tasks": true,
+      "require_tasks_reference_arch": true
+    }
+  },
   "extensions": {
     "acceptance_criteria_map": [
       {
@@ -109,33 +138,6 @@
           "VSTEP-002"
         ]
       }
-    ],
-    "invariants_engine": {
-      "enabled": true,
-      "items": [
-        {
-          "id": "INV-001",
-          "params": {}
-        }
-      ]
-    },
-    "drift_detection": {
-      "enabled": true,
-      "artifacts": {
-        "prd_path": "docs/PRD.md",
-        "architecture_path": "docs/Architecture.md",
-        "tasks_path": "docs/Tasks.md"
-      },
-      "id_rules": {
-        "REQ": "REQ-\\d{3}",
-        "ARC": "ARC-\\d{3}",
-        "TASK": "TASK-\\d{3}"
-      },
-      "coverage_rules": {
-        "require_all_reqs_covered_by_arch": true,
-        "require_all_arch_covered_by_tasks": true,
-        "require_tasks_reference_arch": true
-      }
-    }
+    ]
   }
 }
