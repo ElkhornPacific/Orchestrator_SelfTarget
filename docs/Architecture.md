@@ -1,13 +1,6 @@
-# Architecture — Target Identity Lock (Orchestrator)
+ARC-001: GuardContract prerequisite documentation in BRANCH flow. Implements REQ-001, REQ-002, REQ-006, REQ-007.
+ARC-002: System-of-record and approved GuardContract copy-source guidance. Implements REQ-004, REQ-005, REQ-006.
+ARC-003: Optional manual GuardContract copy step with verification in BRANCH instructions. Implements REQ-002, REQ-003, REQ-006.
+ARC-004: Optional light-touch checks and warnings in initiative_branch.py for missing GuardContract and copy options. Implements REQ-001, REQ-003, REQ-006.
+ARC-005: Example initiative walkthrough and learning capture for GuardContract-on-branch behavior. Implements REQ-006.
 
-This document describes the architecture for Target Identity Lock (wrong-repo protection). At run start the Orchestrator computes and records a stable target identity (normalized path, git root). Before every write to the target repo, it verifies the write destination is under the recorded identity; on mismatch the run fails closed, records violation target_identity_mismatch, and writes the run report to Orchestrator logs. Identity and verification results are included in the run report for audit. Pipeline order is unchanged except for identity capture at start and checks at existing write boundaries (NFR-3).
-
-ARC-001: Target identity capture and path normalization. At run start, compute target identity via a single function (e.g. compute_target_identity): normalized absolute path (Path(target_repo).resolve()), git repository root (git rev-parse --show-toplevel), normalized. Provide path_under_identity(dest, identity) for write-path checks. Use Path.resolve() and relative_to for comparison; as_posix() for run report strings. Implements REQ-001, REQ-002 (minimum set), REQ-008.
-
-ARC-002: Run report schema and failure type. Extend run report with target_identity (path, git_root as posix strings) and target_identity_verification (per-gate pass/fail and violation type). Add failure type target_identity_mismatch to known failure types; set failure_type and populate verification block on identity mismatch. Implements REQ-006, REQ-007.
-
-ARC-003: Write-path identity gates. Before every write to the target repository (run report, baseline capture, step artifacts), call path_under_identity; on mismatch do not write to target, set overall_status FAIL, record violation, and write run report to Orchestrator repo logs (e.g. logs/run-report-identity-fail.json). Dry-run writes continue to go to Orchestrator logs only. Implements REQ-003.
-
-ARC-004: Coordinator and workflow documentation. Document in docs/workflow.md that before any commit or publish in the target repo the Coordinator SHALL re-validate that the target identity still matches and cwd is inside the target repo root; on failure SHALL not commit or push. Document how to include target identity and allowed write paths in Cursor instructions; Cursor echo is optional/advisory (pre-instruction checks are primary). Implements REQ-004, REQ-005.
-
-ARC-005: Audit and observability. Run report (and evidence bundle when used) always includes the recorded target identity and a compact verification summary (gates and pass/fail plus violation type if any) so auditors can confirm no boundary crossing. Implements REQ-006, NFR-2.
