@@ -1,6 +1,5 @@
-ARC-001: GuardContract prerequisite documentation in BRANCH flow. Implements REQ-001, REQ-002, REQ-006, REQ-007.
-ARC-002: System-of-record and approved GuardContract copy-source guidance. Implements REQ-004, REQ-005, REQ-006.
-ARC-003: Optional manual GuardContract copy step with verification in BRANCH instructions. Implements REQ-002, REQ-003, REQ-006.
-ARC-004: Optional light-touch checks and warnings in initiative_branch.py for missing GuardContract and copy options. Implements REQ-001, REQ-003, REQ-006.
-ARC-005: Example initiative walkthrough and learning capture for GuardContract-on-branch behavior. Implements REQ-006.
+# Architecture: One initiative at a time
 
+This document defines the architecture elements for the one-initiative-at-a-time initiative. Each ARC implements one or more requirements from the PRD; tasks reference these ARCs for drift coverage.
+
+ARC-001: Policy documentation in initiative README and RESUME. Implements REQ-001, REQ-002, REQ-003. docs/initiatives/README.md and docs/initiatives/RESUME.md SHALL each contain the primary statement that only one initiative should be active at a time, that docs/workflow-state.md and target_repo always refer to the current initiative, and that running multiple initiatives in parallel or switching context without completing or abandoning the current one is discouraged. Wording SHALL be identical or near-identical in both files to avoid drift; wording SHALL use "should" and "complete or abandon" so that legitimate context switch remains valid.
