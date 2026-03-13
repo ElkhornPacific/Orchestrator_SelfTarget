@@ -1,80 +1,89 @@
-# PRD: One initiative at a time
+# PRD: Docker for Orchestrator projects
 
-*Generated for the initiative in docs/initiatives/one-initiative-at-a-time/. Output: docs/initiatives/one-initiative-at-a-time/PRD.md.*
+*Generated for the initiative in docs/initiatives/docker/. Output: docs/initiatives/docker/PRD.md.*
 
 ## 1. Executive Summary
 
-The Orchestrator workflow uses a single docs/workflow-state.md and a single target_repo per run. The design is one initiative at a time: only one initiative can be "current" in workflow-state. Today this constraint is not stated in the canonical initiative docs, so operators or new contributors may assume they can run multiple initiatives in parallel or switch contexts freely, leading to undefined behavior (wrong merge order, wrong context). This initiative documents the policy explicitly in docs/initiatives/README.md or docs/initiatives/RESUME.md so that only one initiative should be active at a time and workflow-state and target_repo always refer to the current initiative.
+A previous planning session and analysis suggested that Docker would aid in hardening the Orchestrator workflow (reproducible environments, isolation, consistent verification). Docker has been installed locally but is not yet used. This initiative researches whether Docker should be used as a container for Orchestrator projects—Orchestrator itself, SelfTarget, TestTarget, or CI/verification runs—and, if appropriate, introduces Docker so that hardening benefits are realized without unnecessary complexity or tool volatility.
 
 ## 2. Problem Statement
 
-- **Undefined behavior for parallel initiatives.** Someone could branch two initiatives, switch between them, and update workflow-state for each. Which branch and which task list are "current" becomes ambiguous; merge and SelfTarget steps could be applied in the wrong order or to the wrong context.
-- **No stated design constraint.** The code and docs do not state that the design is single-initiative, so new contributors may assume parallel or context-switching is supported.
-- **Resume clarity.** When resuming, it should be explicit that the state file and target_repo refer to one initiative. Documenting "one initiative at a time" sets expectations for operators.
+- **Unused tool.** Docker was adopted on the basis of a hardening recommendation but has not been integrated into the workflow, so the expected benefits (reproducibility, isolation, consistent verification) are not realized.
+- **Unclear scope.** It is not yet defined whether Docker should wrap the Orchestrator runtime, target repos (SelfTarget/TestTarget), verification steps (e.g. pytest, orchestrator.py), or CI only—or whether adoption is justified at all.
+- **Risk of drift.** Without a clear decision and minimal integration, Docker may remain unused or be introduced in an ad hoc way, increasing maintenance cost or tool dependency without clear benefit.
 
 ## 3. Target Users
 
-- **Coordinators** and operators running the Orchestrator workflow who need to know that workflow-state and target_repo refer to a single current initiative.
-- **New contributors** who need to understand that the design is one initiative at a time.
-- **Orchestrator maintainers** who want to avoid undefined behavior and wrong-context merges or SelfTarget updates.
+- **Coordinators** and operators who run the Orchestrator workflow and would benefit from reproducible, isolated environments for verification.
+- **Orchestrator maintainers** who want to harden the workflow (consistent environments, reduced "works on my machine" issues) and need a clear recommendation on Docker.
+- **CI or future automation** that may run Orchestrator or verification in containers.
 
 ## 4. Use Cases
 
-- **UC-1:** When starting or resuming work, the operator reads README or RESUME and sees that only one initiative should be active at a time and that workflow-state and target_repo refer to the current initiative.
-- **UC-2:** Before branching a second initiative, the operator is informed by documentation that the design expects one initiative at a time, so parallel runs are discouraged.
-- **UC-3:** After a merge or SelfTarget update, there is no ambiguity about which initiative was "current" because the docs state that workflow-state and target_repo always refer to the current (single) initiative.
+- **UC-1:** An operator or CI runs Orchestrator (or verification steps) inside a container so that the environment is reproducible and isolated from the host.
+- **UC-2:** A maintainer evaluates Docker (pros, cons, scope options) and produces a documented recommendation (adopt / pilot / defer) so that the project can decide.
+- **UC-3:** If Docker is adopted, verification gates (e.g. pytest, orchestrator.py) can run in a container so that PASS/FAIL is consistent across machines and CI.
 
 ## 5. User Stories and Acceptance Criteria
 
-- **US-1:** As a Coordinator, I want the initiative docs to state clearly that only one initiative should be active at a time so that I do not accidentally treat workflow-state as applicable to multiple branches.
-- **US-2:** As a new contributor, I want to see the single-initiative design stated in README or RESUME so that I do not assume parallel initiatives are supported.
-- **US-3:** As a maintainer, I want the policy documented so that resume behavior and merge/SelfTarget steps are unambiguous.
+- **US-1:** As a maintainer, I want a clear evaluation of whether Docker should be used for Orchestrator projects so that we either adopt it with defined scope or document why we defer.
+- **US-2:** As a Coordinator, I want verification to run in a reproducible environment (if Docker is adopted) so that results are consistent locally and in CI.
+- **US-3:** As an operator, I want documentation that states how to run Orchestrator or verification with Docker (if adopted) so that I can follow a single, supported path.
 
 ## 6. Functional Requirements
 
-REQ-001: docs/initiatives/README.md or docs/initiatives/RESUME.md SHALL state explicitly that only one initiative should be active at a time.
-REQ-002: docs/initiatives/README.md or docs/initiatives/RESUME.md SHALL state that docs/workflow-state.md and target_repo always refer to the current initiative.
-REQ-003: The documentation SHALL discourage running multiple initiatives in parallel or switching context between initiatives without completing or abandoning the current one (e.g. by stating that the design is single-initiative).
+REQ-001: The initiative SHALL produce an evaluation that assesses whether Docker should be used for Orchestrator projects (Orchestrator, SelfTarget, TestTarget, or CI/verification), including pros, cons, and recommended scope or deferral.
+REQ-002: The evaluation SHALL be documented in the initiative folder or in docs/ so that the decision and rationale are auditable and reusable.
+REQ-003: If the recommendation is to adopt or pilot Docker, the initiative SHALL define the scope (e.g. verification-only, full Orchestrator run, CI only) and SHALL produce or reference artifacts (e.g. Dockerfile, usage docs, or run instructions) sufficient to run the in-scope flow in a container.
+REQ-004: If the recommendation is to defer Docker, the initiative SHALL document the rationale and any conditions under which to revisit (e.g. CI requirements, multi-OS support).
+REQ-005: The initiative SHALL NOT make Docker mandatory for local development unless explicitly agreed; adoption SHALL allow optional or CI-only use so that contributors without Docker can still run the workflow where possible.
 
 ## 7. Non-Functional Requirements
 
-- Changes SHALL be documentation-only; no changes to scripts or runtime behavior.
-- Wording SHALL be concise so that the constraint is discoverable in README or RESUME without reading the full workflow.
-- The existing workflow behavior (single workflow-state, single target_repo) SHALL not change; only the explicit statement of the design constraint SHALL be added.
+- Evaluation and any integration SHALL consider tool volatility (Docker API, host dependencies, orchestration complexity) and document exit cost (low/medium/high) if we adopt then later remove Docker.
+- Any Docker usage SHALL align with the existing workflow (e.g. deterministic gates, PASS/FAIL, evidence bundle) and SHALL NOT weaken enforcement or drift detection.
+- Changes SHALL be backwards compatible: existing "run without Docker" paths SHALL remain valid unless the initiative explicitly replaces them with a container-based path and documents the change.
 
 ## 8. Success Metrics / KPIs
 
-- Operators and contributors can find the "one initiative at a time" policy in README or RESUME.
-- No new reports of ambiguity about which initiative is "current" when resuming or when performing merge/SelfTarget steps (observable via session-changelog or feedback).
+- A clear, documented recommendation (adopt / pilot / defer) with rationale.
+- If adopted: at least one supported path to run Orchestrator or verification in a container, with docs and (if in scope) a Dockerfile or equivalent.
+- No regression in workflow determinism or gate semantics; Docker is an optional or additive layer unless otherwise decided.
 
 ## 9. UX Considerations
 
-- Place the statement where operators and contributors already look: README.md or RESUME.md under docs/initiatives/.
-- Keep the statement short (one or two sentences) so it does not add friction; link to workflow-state or workflow.md if more detail is needed.
+- Documentation SHALL make it obvious whether Docker is required, optional, or CI-only so that operators know what they need to run.
+- If Docker is adopted, run instructions SHALL be minimal (e.g. one or two commands) and SHALL live in a discoverable place (e.g. README, docs/workflow.md, or initiative folder).
 
 ## 10. Open Questions
 
-- Resolved: Both README.md and RESUME.md SHALL contain the primary statement (one initiative at a time; workflow-state and target_repo refer to the current initiative). This ensures the policy is visible from the initiative index and from the one-page resume flow without cross-referencing.
+- **Scope:** Should Docker wrap the Orchestrator process only, verification steps (pytest, orchestrator.py), target repos (SelfTarget/TestTarget), or CI only? The implementation plan should propose a scope and justify it.
+- **Pilot vs full adoption:** Is a time-boxed pilot (e.g. CI-only) preferred before committing to local development use?
+- **Baseline:** Should container images be versioned or pinned so that verification remains reproducible over time?
 
 ## 11. Assumptions and Dependencies
 
-- docs/workflow-state.md and the single target_repo per run will continue to be the design; this initiative does not propose changing that, only documenting it.
-- docs/initiatives/README.md and docs/initiatives/RESUME.md exist and are the right place for operator-facing policy.
+- Docker is already installed locally; the initiative does not require installing Docker as a deliverable.
+- The Orchestrator repo, SelfTarget, and TestTarget are the primary candidates for containerization or container-hosted verification; other targets may be out of scope for this initiative.
+- The existing workflow (workflow.md, verification steps, GuardContract, run-report) remains the source of truth for gate semantics; Docker is an execution environment, not a replacement for that logic.
 
 ## 12. Risks and Mitigation Plan
 
-- **Risk:** Wording could be too strong ("must never") and discourage legitimate workflows (e.g. abandoning one initiative and starting another).  
-  **Mitigation:** Use "should" or "design is one initiative at a time" and "workflow-state and target_repo refer to the current initiative"; allow for explicit context switch (e.g. abandon or complete current initiative first) rather than implying a hard technical lock.
+- **Risk:** Docker adds complexity (images, networking, host bindings) and can break or slow local iteration.  
+  **Mitigation:** Keep Docker optional for local use unless agreed otherwise; prefer CI-only or pilot scope first. Document a simple "run without Docker" path.
 
-- **Risk:** Duplicate wording in README and RESUME could get out of sync.  
-  **Mitigation:** State the policy in one place (e.g. RESUME.md) and reference it from README.md, or use a single short sentence that is identical in both.
+- **Risk:** Tool volatility—Docker Desktop, Docker API, or host OS changes could break the integration.  
+  **Mitigation:** Document exit cost and pin or version images where possible; avoid deep coupling to Docker-specific features.
+
+- **Risk:** Scope creep—containerizing everything (Orchestrator + all targets) may be unnecessary.  
+  **Mitigation:** Evaluation and implementation plan SHALL define minimal scope (e.g. verification only or CI only) and expand only if justified.
 
 ## 13. Tool Role and Architecture Risk Assessment
 
-**Tool classification:** No new external tools or services. This initiative adds documentation only; the only "tools" are the existing docs (README.md, RESUME.md) and workflow-state.md.
+**Tool classification:** Docker is **Processing / Compute** (runtime environment). It is not an Authoring Surface, System of Record, or Ingestion Edge for Orchestrator artifacts; PRD, Architecture, Tasks, GuardContract, and run-report remain in the repo and are not stored inside Docker.
 
-**System of record:** docs/workflow-state.md remains the single canonical state file for the workflow; this initiative does not change that. The initiative docs (README, RESUME) are authoritative for operator-facing policy.
+**System of record:** Unchanged. Orchestrator repo (and target repos) remain the system of record for docs and contracts. Docker containers run code and verification; they do not become the SOR for planning or enforcement artifacts.
 
-**High-risk tools:** None.
+**High-risk tools:** Docker itself is a dependency; if we adopt it, image provenance, updates, and host requirements become part of the support surface. The evaluation SHALL address this (versioning, exit cost).
 
-**Disallowed as SOR:** N/A; no external SaaS or new systems. Orchestrator repo docs remain the source of truth for the one-initiative-at-a-time policy.
+**Disallowed as SOR:** Docker or any container registry SHALL NOT be the system of record for PRD, Architecture, Tasks, GuardContract, or workflow-state; those remain in the Orchestrator and target repos.
