@@ -1,89 +1,80 @@
-# PRD: Docker for Orchestrator projects
+# PRD: Initiative phase "executing"
 
-*Generated for the initiative in docs/initiatives/docker/. Output: docs/initiatives/docker/PRD.md.*
+*Generated for the initiative in docs/initiatives/initiative-phase-executing/. Output: docs/initiatives/initiative-phase-executing/PRD.md.*
 
 ## 1. Executive Summary
 
-A previous planning session and analysis suggested that Docker would aid in hardening the Orchestrator workflow (reproducible environments, isolation, consistent verification). Docker has been installed locally but is not yet used. This initiative researches whether Docker should be used as a container for Orchestrator projects—Orchestrator itself, SelfTarget, TestTarget, or CI/verification runs—and, if appropriate, introduces Docker so that hardening benefits are realized without unnecessary complexity or tool volatility.
+When an initiative is branched, phase is set to "branched" and remains so until end-of-task sets it to "tasks-complete." The phase "executing" is never set when the Coordinator starts the first task, so initiative-status.md does not reflect that execution has begun. This initiative adds a step so that when the Coordinator starts the first task on an initiative branch (in workflow Step 2 or workflow-resume), the phase in docs/initiatives/&lt;slug&gt;/initiative-status.md is set to "executing." The initiative lifecycle then accurately reflects planning-complete, branched, executing, tasks-complete, merge-pending, and complete.
 
 ## 2. Problem Statement
 
-- **Unused tool.** Docker was adopted on the basis of a hardening recommendation but has not been integrated into the workflow, so the expected benefits (reproducibility, isolation, consistent verification) are not realized.
-- **Unclear scope.** It is not yet defined whether Docker should wrap the Orchestrator runtime, target repos (SelfTarget/TestTarget), verification steps (e.g. pytest, orchestrator.py), or CI only—or whether adoption is justified at all.
-- **Risk of drift.** Without a clear decision and minimal integration, Docker may remain unused or be introduced in an ad hoc way, increasing maintenance cost or tool dependency without clear benefit.
+- **Status does not reflect reality.** Phase "branched" suggests work has not started. Once the first task is being implemented, the phase should indicate "executing" so operators can distinguish ready-to-run from running.
+- **Inconsistent lifecycle.** We have planning-complete, branched, tasks-complete, merge-pending, complete. An explicit "executing" phase makes the lifecycle clearer and avoids ambiguity.
+- **Optional but clarifying.** The next action is similar whether phase is "branched" or "executing," but setting "executing" when the first task starts avoids ambiguity and supports operators who check initiative-status to see current state.
 
 ## 3. Target Users
 
-- **Coordinators** and operators who run the Orchestrator workflow and would benefit from reproducible, isolated environments for verification.
-- **Orchestrator maintainers** who want to harden the workflow (consistent environments, reduced "works on my machine" issues) and need a clear recommendation on Docker.
-- **CI or future automation** that may run Orchestrator or verification in containers.
+- **Coordinators** and operators who run the workflow and check initiative-status.md to see whether an initiative is ready to run, in progress, or complete.
+- **Orchestrator maintainers** who want the initiative lifecycle phases to accurately reflect actual state (planning, branching, execution, completion, merge).
 
 ## 4. Use Cases
 
-- **UC-1:** An operator or CI runs Orchestrator (or verification steps) inside a container so that the environment is reproducible and isolated from the host.
-- **UC-2:** A maintainer evaluates Docker (pros, cons, scope options) and produces a documented recommendation (adopt / pilot / defer) so that the project can decide.
-- **UC-3:** If Docker is adopted, verification gates (e.g. pytest, orchestrator.py) can run in a container so that PASS/FAIL is consistent across machines and CI.
+- **UC-1:** When the Coordinator begins the first task on an initiative branch (Step 2 Executor or workflow-resume), initiative-status.md is updated to Phase: executing so that anyone reading the status sees that task execution has started.
+- **UC-2:** An operator opening initiative-status.md during a run can distinguish "branched" (ready, not yet started) from "executing" (first or subsequent task in progress).
+- **UC-3:** The full lifecycle is explicit: planning-complete → branched → executing → tasks-complete → merge-pending → complete.
 
 ## 5. User Stories and Acceptance Criteria
 
-- **US-1:** As a maintainer, I want a clear evaluation of whether Docker should be used for Orchestrator projects so that we either adopt it with defined scope or document why we defer.
-- **US-2:** As a Coordinator, I want verification to run in a reproducible environment (if Docker is adopted) so that results are consistent locally and in CI.
-- **US-3:** As an operator, I want documentation that states how to run Orchestrator or verification with Docker (if adopted) so that I can follow a single, supported path.
+- **US-1:** As a Coordinator, I want the phase to be set to "executing" when the first task starts so that initiative-status reflects reality and I do not have to infer state from other artifacts.
+- **US-2:** As an operator, I want to open initiative-status.md and see "executing" when work has begun so that I can distinguish ready-to-run from in-progress.
+- **US-3:** As a maintainer, I want the lifecycle to be consistent (including an explicit executing phase) so that workflow docs and tooling can reference phases unambiguously.
 
 ## 6. Functional Requirements
 
-REQ-001: The initiative SHALL produce an evaluation that assesses whether Docker should be used for Orchestrator projects (Orchestrator, SelfTarget, TestTarget, or CI/verification), including pros, cons, and recommended scope or deferral.
-REQ-002: The evaluation SHALL be documented in the initiative folder or in docs/ so that the decision and rationale are auditable and reusable.
-REQ-003: If the recommendation is to adopt or pilot Docker, the initiative SHALL define the scope (e.g. verification-only, full Orchestrator run, CI only) and SHALL produce or reference artifacts (e.g. Dockerfile, usage docs, or run instructions) sufficient to run the in-scope flow in a container.
-REQ-004: If the recommendation is to defer Docker, the initiative SHALL document the rationale and any conditions under which to revisit (e.g. CI requirements, multi-OS support).
-REQ-005: The initiative SHALL NOT make Docker mandatory for local development unless explicitly agreed; adoption SHALL allow optional or CI-only use so that contributors without Docker can still run the workflow where possible.
+REQ-001: When the Coordinator starts the first task on an initiative branch (e.g. in workflow Step 2 or in workflow-resume when determining/starting the next task), the Coordinator SHALL update docs/initiatives/&lt;slug&gt;/initiative-status.md to set Phase to "executing" (where &lt;slug&gt; is the current initiative).
+REQ-002: The update SHALL occur at the start of the first task execution (before or when the Executor is spawned), not after the task completes, so that status reflects "executing" during the run.
+REQ-003: docs/workflow.md and/or docs/workflow-resume.md SHALL document that when starting the first task on an initiative branch, the Coordinator updates initiative-status.md to Phase: executing so that the step is auditable and repeatable.
 
 ## 7. Non-Functional Requirements
 
-- Evaluation and any integration SHALL consider tool volatility (Docker API, host dependencies, orchestration complexity) and document exit cost (low/medium/high) if we adopt then later remove Docker.
-- Any Docker usage SHALL align with the existing workflow (e.g. deterministic gates, PASS/FAIL, evidence bundle) and SHALL NOT weaken enforcement or drift detection.
-- Changes SHALL be backwards compatible: existing "run without Docker" paths SHALL remain valid unless the initiative explicitly replaces them with a container-based path and documents the change.
+- The change SHALL be minimal: add or adjust one workflow step (and any script or prompt text) to set Phase: executing; do not change gate semantics, allowlist, or enforcement logic.
+- The initiative-status.md file and its location (docs/initiatives/&lt;slug&gt;/initiative-status.md) SHALL remain as today; only the phase value and the moment at which it is set SHALL change.
+- Existing phases (planning-complete, branched, tasks-complete, merge-pending, complete) SHALL remain; "executing" is added between "branched" and "tasks-complete."
 
 ## 8. Success Metrics / KPIs
 
-- A clear, documented recommendation (adopt / pilot / defer) with rationale.
-- If adopted: at least one supported path to run Orchestrator or verification in a container, with docs and (if in scope) a Dockerfile or equivalent.
-- No regression in workflow determinism or gate semantics; Docker is an optional or additive layer unless otherwise decided.
+- When the Coordinator starts the first task on an initiative branch, initiative-status.md shows Phase: executing for the duration of task execution.
+- No regression in workflow gates or dual-review process; the only behavioral change is the phase update and its documentation.
 
 ## 9. UX Considerations
 
-- Documentation SHALL make it obvious whether Docker is required, optional, or CI-only so that operators know what they need to run.
-- If Docker is adopted, run instructions SHALL be minimal (e.g. one or two commands) and SHALL live in a discoverable place (e.g. README, docs/workflow.md, or initiative folder).
+- The phase update SHALL be automatic (Coordinator or workflow step), not a manual edit, so that operators are not required to remember to set "executing."
+- initiative-status.md SHALL remain the single place to see phase; no new status file or duplicate state.
 
 ## 10. Open Questions
 
-- **Scope:** Should Docker wrap the Orchestrator process only, verification steps (pytest, orchestrator.py), target repos (SelfTarget/TestTarget), or CI only? The implementation plan should propose a scope and justify it.
-- **Pilot vs full adoption:** Is a time-boxed pilot (e.g. CI-only) preferred before committing to local development use?
-- **Baseline:** Should container images be versioned or pinned so that verification remains reproducible over time?
+- **Where exactly to set the phase:** In workflow.md Step 2 ("When starting the first task of an initiative") we already update phase to "executing" per the current workflow-resume text; this initiative makes that explicit and ensures it is done. If the workflow already contains this step, the initiative may be satisfied by documentation and verification only. Resolve during implementation: confirm whether the update already occurs and, if not, add it.
 
 ## 11. Assumptions and Dependencies
 
-- Docker is already installed locally; the initiative does not require installing Docker as a deliverable.
-- The Orchestrator repo, SelfTarget, and TestTarget are the primary candidates for containerization or container-hosted verification; other targets may be out of scope for this initiative.
-- The existing workflow (workflow.md, verification steps, GuardContract, run-report) remains the source of truth for gate semantics; Docker is an execution environment, not a replacement for that logic.
+- docs/initiatives/&lt;slug&gt;/initiative-status.md exists when an initiative is in phase "branched" (created by initiative_resume.py or planning launcher).
+- The Coordinator (or the agent following workflow.md) can determine the current initiative slug (e.g. from workflow-state, branch name, or context) to write to the correct initiative-status.md.
+- workflow-resume.md and workflow.md are the authoritative sources for when to update phase; execute.md may reference them.
 
 ## 12. Risks and Mitigation Plan
 
-- **Risk:** Docker adds complexity (images, networking, host bindings) and can break or slow local iteration.  
-  **Mitigation:** Keep Docker optional for local use unless agreed otherwise; prefer CI-only or pilot scope first. Document a simple "run without Docker" path.
+- **Risk:** Phase could be set too early (e.g. at branch creation) or too late (after first task completes), leading to a window where status is wrong.  
+  **Mitigation:** REQ-002 specifies "at the start of the first task execution"; implementation should update phase when the Coordinator is about to spawn the Executor for the first task (or at the equivalent moment in workflow-resume).
 
-- **Risk:** Tool volatility—Docker Desktop, Docker API, or host OS changes could break the integration.  
-  **Mitigation:** Document exit cost and pin or version images where possible; avoid deep coupling to Docker-specific features.
-
-- **Risk:** Scope creep—containerizing everything (Orchestrator + all targets) may be unnecessary.  
-  **Mitigation:** Evaluation and implementation plan SHALL define minimal scope (e.g. verification only or CI only) and expand only if justified.
+- **Risk:** Multiple initiatives or branches could cause the wrong initiative-status.md to be updated.  
+  **Mitigation:** One initiative at a time is policy; workflow-state and target_repo refer to the current initiative. The Coordinator updates only the current initiative's initiative-status.md (slug from context).
 
 ## 13. Tool Role and Architecture Risk Assessment
 
-**Tool classification:** Docker is **Processing / Compute** (runtime environment). It is not an Authoring Surface, System of Record, or Ingestion Edge for Orchestrator artifacts; PRD, Architecture, Tasks, GuardContract, and run-report remain in the repo and are not stored inside Docker.
+**Tool classification:** No new external tools. The change affects workflow steps and possibly a small script or prompt text that writes to initiative-status.md. Orchestrator repo docs (workflow.md, workflow-resume.md) and the initiative-status file are the only artifacts.
 
-**System of record:** Unchanged. Orchestrator repo (and target repos) remain the system of record for docs and contracts. Docker containers run code and verification; they do not become the SOR for planning or enforcement artifacts.
+**System of record:** docs/initiatives/&lt;slug&gt;/initiative-status.md remains the system of record for initiative phase; this initiative does not change SOR, only when "executing" is written.
 
-**High-risk tools:** Docker itself is a dependency; if we adopt it, image provenance, updates, and host requirements become part of the support surface. The evaluation SHALL address this (versioning, exit cost).
+**High-risk tools:** None.
 
-**Disallowed as SOR:** Docker or any container registry SHALL NOT be the system of record for PRD, Architecture, Tasks, GuardContract, or workflow-state; those remain in the Orchestrator and target repos.
+**Disallowed as SOR:** N/A. No external service or new system of record is introduced.
